@@ -4,6 +4,7 @@ public class Round
 {
     private const int MinPlayers = 1;
     private const int MaxPlayers = 5;
+    private const int StartingCards = 2;
 
     private readonly Deck _deck;
 
@@ -22,10 +23,20 @@ public class Round
         _deck = deck;
     }
 
-    // Två kort till var och en, ett i taget, spelarna först och givaren sist.
+    // Två kort till var och en, ett i taget. Givarens andra kort är hålkortet.
     public void Deal()
     {
-        for (int i = 0; i < 2; i++)
+        if (_deck.NeedsReshuffle)
+        {
+            _deck.Reset();
+        }
+
+        foreach (Player player in Players)
+        {
+            player.Hand.Clear();
+        }
+
+        for (int i = 0; i < StartingCards; i++)
         {
             foreach (Player player in Players)
             {
@@ -39,50 +50,68 @@ public class Round
     {
         if (player.Hand.IsBust)
         {
-            throw new InvalidOperationException("Spelaren är redan tjock och kan inte ta fler kort.");
+            throw new InvalidOperationException("Spelaren har redan spräckt och kan inte köpa fler kort.");
         }
 
         player.Receive(_deck.Draw());
     }
 
+    // Rundan spelas alltid färdigt, även om alla spelare har spräckt.
     public void PlayDealer()
     {
+        Dealer.RevealHoleCard();
+
         while (Dealer.MustDraw)
         {
             Dealer.Receive(_deck.Draw());
         }
     }
 
-    public RoundResult GetResult(Player player)
+    public Outcome GetOutcome(Player player)
     {
         Hand playerHand = player.Hand;
         Hand dealerHand = Dealer.Hand;
 
         if (playerHand.IsBust)
         {
-            return RoundResult.Loss;
+            return Outcome.Lose;
         }
         if (playerHand.IsBlackjack && !dealerHand.IsBlackjack)
         {
-            return RoundResult.Blackjack;
+            return Outcome.Blackjack;
         }
         if (dealerHand.IsBlackjack && !playerHand.IsBlackjack)
         {
-            return RoundResult.Loss;
+            return Outcome.Lose;
         }
         if (dealerHand.IsBust)
         {
-            return RoundResult.Win;
+            return Outcome.Win;
         }
 
         if (playerHand.Value > dealerHand.Value)
         {
-            return RoundResult.Win;
+            return Outcome.Win;
         }
         if (playerHand.Value < dealerHand.Value)
         {
-            return RoundResult.Loss;
+            return Outcome.Lose;
         }
-        return RoundResult.Push;
+        return Outcome.Push;
+    }
+
+    // Avgör alla spelare mot givaren och bokför resultatet på varje spelare.
+    public IReadOnlyDictionary<Player, Outcome> Settle()
+    {
+        var outcomes = new Dictionary<Player, Outcome>();
+
+        foreach (Player player in Players)
+        {
+            Outcome outcome = GetOutcome(player);
+            player.Record(outcome);
+            outcomes[player] = outcome;
+        }
+
+        return outcomes;
     }
 }

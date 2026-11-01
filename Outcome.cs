@@ -1,9 +1,9 @@
 namespace Tjugoett;
 
-public enum RoundResult
+public enum Outcome
 {
     Win,
-    Loss,
+    Lose,
     Push,
     Blackjack
 }
