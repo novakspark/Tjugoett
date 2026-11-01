@@ -6,8 +6,9 @@ public class Game
     private readonly GameStorage _storage;
     private readonly Deck _deck = new();
 
-    private readonly List<Player> _knownPlayers = new(); // alla som har spelat, sparas till fil
-    private readonly List<Player> _table = new();        // de som sitter vid bordet just nu
+    private readonly List<Player> _knownPlayers = new(); // människor som har spelat, sparas till fil
+    private readonly List<Player> _table = new();        // alla som sitter vid bordet just nu
+    private int _computerCount;
 
     public Game(ConsoleUi ui, GameStorage storage)
     {
@@ -27,6 +28,9 @@ public class Game
             {
                 case MenuChoice.AddPlayer:
                     AddPlayer();
+                    break;
+                case MenuChoice.AddComputerPlayer:
+                    AddComputerPlayer();
                     break;
                 case MenuChoice.PlayRound:
                     PlayRound();
@@ -71,6 +75,26 @@ public class Game
         _ui.ShowMessage($"{player.Name} satte sig vid bordet.");
     }
 
+    // Datorspelare sparas inte till fil, de finns bara vid bordet.
+    private void AddComputerPlayer()
+    {
+        if (_table.Count >= Round.MaxPlayers)
+        {
+            _ui.ShowMessage($"Bordet är fullt, högst {Round.MaxPlayers} spelare.");
+            return;
+        }
+
+        StrategyChoice choice = _ui.AskStrategyChoice();
+        _computerCount++;
+
+        ComputerPlayer computer = choice == StrategyChoice.Basic
+            ? new ComputerPlayer($"Dator {_computerCount} (grundstrategi)", new BasicStrategy())
+            : new ComputerPlayer($"Dator {_computerCount} (enkel)", new SimpleStrategy());
+
+        _table.Add(computer);
+        _ui.ShowMessage($"{computer.Name} satte sig vid bordet.");
+    }
+
     private void PlayRound()
     {
         if (_table.Count == 0)
@@ -101,7 +125,7 @@ public class Game
         {
             _ui.ShowTable(round, player);
 
-            if (_ui.AskMove(player) == Move.Stand)
+            if (GetMove(round, player) == Move.Stand)
             {
                 return;
             }
@@ -110,6 +134,20 @@ public class Game
         }
 
         _ui.ShowTable(round, player);
+    }
+
+    // Beslutet kommer utifrån: människan frågas via gränssnittet, datorn av sin strategi.
+    private Move GetMove(Round round, Player player)
+    {
+        if (player is not ComputerPlayer computer)
+        {
+            return _ui.AskMove(player);
+        }
+
+        Card upCard = round.Dealer.UpCard ?? throw new InvalidOperationException("Givaren har inget öppet kort.");
+        Move move = computer.ChooseMove(upCard);
+        _ui.ShowComputerMove(player, move);
+        return move;
     }
 
     private void LoadPlayers()

@@ -23,11 +23,12 @@ public class ConsoleUi
         Console.WriteLine();
         Console.WriteLine($"=== Tjugoett === (spelare vid bordet: {playersAtTable})");
         Console.WriteLine("1. Lägg till spelare");
-        Console.WriteLine("2. Spela en runda");
-        Console.WriteLine("3. Visa resultat");
-        Console.WriteLine("4. Avsluta");
+        Console.WriteLine("2. Lägg till datorspelare");
+        Console.WriteLine("3. Spela en runda");
+        Console.WriteLine("4. Visa resultat");
+        Console.WriteLine("5. Avsluta");
 
-        return (MenuChoice)AskNumber(1, 4);
+        return (MenuChoice)AskNumber(1, 5);
     }
 
     public string AskPlayerName(IEnumerable<string> takenNames)
@@ -65,6 +66,20 @@ public class ConsoleUi
         Console.WriteLine("2. Stanna");
 
         return AskNumber(1, 2) == 1 ? Move.Hit : Move.Stand;
+    }
+
+    public StrategyChoice AskStrategyChoice()
+    {
+        Console.WriteLine("Vilken strategi ska datorspelaren använda?");
+        Console.WriteLine("1. Enkel (köper tills handen är 17 eller mer)");
+        Console.WriteLine("2. Grundstrategi (följer en tabell)");
+
+        return (StrategyChoice)AskNumber(1, 2);
+    }
+
+    public void ShowComputerMove(Player player, Move move)
+    {
+        Console.WriteLine(move == Move.Hit ? $"{player.Name} köper ett kort." : $"{player.Name} stannar.");
     }
 
     public void ShowTable(Round round, Player activePlayer)
