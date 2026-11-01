@@ -3,7 +3,7 @@ namespace Tjugoett;
 public class Round
 {
     private const int MinPlayers = 1;
-    private const int MaxPlayers = 5;
+    public const int MaxPlayers = 5;
     private const int StartingCards = 2;
 
     private readonly Deck _deck;
