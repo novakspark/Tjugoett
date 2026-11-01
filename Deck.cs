@@ -2,10 +2,12 @@ namespace Tjugoett;
 
 public class Deck
 {
+    public const int ReshuffleThreshold = 15;
+
     private readonly List<Card> _cards = new();
-    private readonly Random _random = new();
 
     public int Count => _cards.Count;
+    public bool NeedsReshuffle => _cards.Count < ReshuffleThreshold;
 
     public Deck()
     {
@@ -25,12 +27,13 @@ public class Deck
         Shuffle();
     }
 
-    // Fisher-Yates: går bakifrån och byter varje kort med ett slumpat kort före (eller på) samma plats
+    // Fisher-Yates: går bakifrån och byter varje kort med ett slumpat kort bland dem som ligger före (eller på samma plats).
+    // Random.Shared är en enda Random som delas av hela programmet.
     private void Shuffle()
     {
         for (int i = _cards.Count - 1; i > 0; i--)
         {
-            int j = _random.Next(i + 1);
+            int j = Random.Shared.Next(i + 1);
             (_cards[i], _cards[j]) = (_cards[j], _cards[i]);
         }
     }
